@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test İletişim Formu</title>
+    <!-- Tailwind CSS (CDN aracılığıyla) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 border border-gray-100">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">Bize Ulaşın</h1>
+            <p class="text-gray-500 text-sm">Görüş, öneri veya taleplerinizi bize iletin.</p>
+        </div>
+
+        <form id="contactForm" class="space-y-5">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label for="isim" class="block text-sm font-medium text-gray-700">İsim</label>
+                    <input type="text" id="isim" name="isim" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                        placeholder="Adınız">
+                </div>
+                
+                <div class="space-y-1">
+                    <label for="soyisim" class="block text-sm font-medium text-gray-700">Soyisim</label>
+                    <input type="text" id="soyisim" name="soyisim" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                        placeholder="Soyadınız">
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label for="telefon" class="block text-sm font-medium text-gray-700">Telefon Numarası</label>
+                <input type="tel" id="telefon" name="telefon" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                    placeholder="05XX XXX XX XX">
+            </div>
+
+            <div class="space-y-1">
+                <label for="mesaj" class="block text-sm font-medium text-gray-700">Mesajınız</label>
+                <textarea id="mesaj" name="mesaj" rows="4" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none"
+                    placeholder="Size nasıl yardımcı olabiliriz?"></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                <span>Mesajı Gönder</span>
+                <svg id="spinner" class="animate-spin hidden h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </form>
+
+        <!-- Bildirim Alanı -->
+        <div id="notification" class="hidden mt-4 p-4 rounded-lg text-sm text-center font-medium"></div>
+
+    </div>
+
+    <script>
+        const form = document.getElementById('contactForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const spinner = document.getElementById('spinner');
+        const notification = document.getElementById('notification');
+        
+        // n8n Webhook URL
+        const WEBHOOK_URL = 'https://eapehlivanlihot.app.n8n.cloud/webhook/7495ee19-03ae-49ee-8774-8df5eb7e2601';
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Form verilerini al
+            const formData = {
+                form_id: '123e4567-e89b-12d3-a456-426614174000', // Örnek olarak bırakılmış statik UUID veya Form Kimliği
+                isim: document.getElementById('isim').value,
+                soyisim: document.getElementById('soyisim').value,
+                telefon: document.getElementById('telefon').value,
+                mesaj: document.getElementById('mesaj').value,
+                kaynak: 'Test Arayüzü',
+                tarih: new Date().toISOString()
+            };
+
+            // Butonu yükleniyor durumuna al
+            const originalBtnText = submitBtn.querySelector('span').innerText;
+            submitBtn.querySelector('span').innerText = 'Gönderiliyor...';
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            spinner.classList.remove('hidden');
+            notification.classList.add('hidden');
+
+            try {
+                // n8n'e POST isteği at
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    showNotification('Mesajınız başarıyla iletildi!', 'success');
+                    form.reset();
+                } else {
+                    throw new Error('Sunucu kaynaklı bir hata oluştu.');
+                }
+            } catch (error) {
+                console.error('Hata:', error);
+                showNotification('İletim başarısız: ' + error.message, 'error');
+            } finally {
+                // Butonu eski haline getir
+                submitBtn.querySelector('span').innerText = originalBtnText;
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                spinner.classList.add('hidden');
+            }
+        });
+
+        function showNotification(message, type) {
+            notification.textContent = message;
+            notification.className = `mt-4 p-4 rounded-lg text-sm text-center font-medium ${
+                type === 'success' 
+                    ? 'bg-green-50 text-green-800 border-green-200' 
+                    : 'bg-red-50 text-red-800 border-red-200'
+            } border`;
+            notification.classList.remove('hidden');
+
+            // 5 saniye sonra bildirimi gizle
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
