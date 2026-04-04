@@ -145,12 +145,12 @@ export default async function DoktorTakvimPage() {
                   key={slot.id} 
                   className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow"
                 >
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${slot.musait ? "bg-green-500" : "bg-red-500"}`} />
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${slot.musait ? "bg-blue-600" : "bg-red-500"}`} />
                   <div className="pl-3">
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-sm font-medium text-gray-700">{formatDate(slot.tarih).split(' ')[0]}</span>
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${slot.musait ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${slot.musait ? "bg-blue-50 text-blue-700" : "bg-red-100 text-red-700"}`}>
                           {slot.musait ? "Müsait" : "Dolu"}
                         </span>
                         <form action={deleteMusaitlik}>
