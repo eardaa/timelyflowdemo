@@ -29,6 +29,21 @@ export default async function DoktorTakvimPage() {
     if (data) takvimGecmisi = data;
   }
 
+  // Müsaitliği Sil
+  const deleteMusaitlik = async (formData: FormData) => {
+    "use server";
+    const musaitlik_id = formData.get("id") as string;
+    if (!musaitlik_id) return;
+    
+    const supabaseServer = await createClient();
+    await supabaseServer
+      .from("doktor_takvim")
+      .delete()
+      .eq("id", musaitlik_id);
+      
+    revalidatePath("/dashboard/doktor/takvim");
+  };
+
   // Server Action to add new availability
   const addMusaitlik = async (formData: FormData) => {
     "use server";
@@ -66,9 +81,9 @@ export default async function DoktorTakvimPage() {
       </div>
 
       {/* Müsaitlik Ekleme Formu */}
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mt-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-6">Yeni Müsaitlik Ekle</h2>
-        <form action={addMusaitlik} className="grid grid-cols-1 md:grid-cols-5 gap-x-6 gap-y-4 items-end">
+        <form action={addMusaitlik} className="grid grid-cols-1 md:grid-cols-6 gap-x-6 gap-y-4 items-end">
           <input type="hidden" name="doktor_id" value={doktorId} />
           
           <div className="md:col-span-1">
@@ -98,7 +113,7 @@ export default async function DoktorTakvimPage() {
               className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
             />
           </div>
-          <div className="md:col-span-1">
+          <div className="md:col-span-2">
             <label className="block text-xs font-medium text-gray-500 mb-1">Not (İsteğe bağlı)</label>
             <input 
               type="text" 
@@ -118,8 +133,8 @@ export default async function DoktorTakvimPage() {
         </form>
       </div>
 
-      {/* Basit Takvim Görünümü (Grid Listesi) */}
-      <div className="space-y-4 mt-12">
+      {/* Planlanmış Saatler */}
+      <div className="space-y-4 mt-8">
         <h2 className="text-lg font-semibold text-gray-800">Planlanmış Saatler</h2>
         
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm min-h-[160px] flex flex-col justify-center">
@@ -134,9 +149,21 @@ export default async function DoktorTakvimPage() {
                   <div className="pl-3">
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-sm font-medium text-gray-700">{formatDate(slot.tarih).split(' ')[0]}</span>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${slot.musait ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                        {slot.musait ? "Müsait" : "Dolu"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${slot.musait ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                          {slot.musait ? "Müsait" : "Dolu"}
+                        </span>
+                        <form action={deleteMusaitlik}>
+                          <input type="hidden" name="id" value={slot.id} />
+                          <button 
+                            type="submit" 
+                            className="text-red-500 hover:bg-red-50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all"
+                            title="Sil"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                          </button>
+                        </form>
+                      </div>
                     </div>
                     <div className="text-lg font-semibold text-gray-900 my-1">
                       {slot.baslangic_saat.substring(0, 5)} - {slot.bitis_saat.substring(0, 5)}
