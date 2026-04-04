@@ -218,11 +218,6 @@ export default function TakvimClient({ takvimGecmisi, doktorId }: { takvimGecmis
                            </div>
                         </div>
                         
-                        {day.slots.length > 1 && (
-                          <button onClick={() => removeSlot(dayIndex, slotIndex)} className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Sil">
-                             <TrashIcon />
-                          </button>
-                        )}
                       </div>
                     ))}
                   </div>
