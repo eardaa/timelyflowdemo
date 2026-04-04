@@ -11,7 +11,7 @@ export async function addMusaitlik(formData: FormData) {
   const doktor_id = formData.get("doktor_id") as string;
   const durum = formData.get("durum") as string; // 'musait' veya 'dolu'
   
-  if (!tarih || !baslangic || !bitis || !doktor_id) return { success: false, error: "Eksik bilgi" };
+  if (!tarih || !baslangic || !bitis || !doktor_id) return;
 
   const isMusait = durum !== "dolu"; // default to true unless explicitly 'dolu'
 
@@ -33,16 +33,15 @@ export async function addMusaitlik(formData: FormData) {
     
   if (error) {
     console.error("Müsaitlik eklerken hata:", error);
-    return { success: false, error: error.message };
+    return;
   }
     
   revalidatePath("/dashboard/doktor/takvim");
-  return { success: true };
 }
 
 export async function deleteMusaitlik(formData: FormData) {
   const musaitlik_id = formData.get("id") as string;
-  if (!musaitlik_id) return { success: false };
+  if (!musaitlik_id) return;
   
   const supabase = await createClient();
   const { error } = await supabase
@@ -52,9 +51,8 @@ export async function deleteMusaitlik(formData: FormData) {
     
   if (error) {
     console.error("Müsaitlik silerken hata:", error);
-    return { success: false, error: error.message };
+    return;
   }
     
   revalidatePath("/dashboard/doktor/takvim");
-  return { success: true };
 }
