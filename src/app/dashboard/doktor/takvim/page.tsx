@@ -66,51 +66,51 @@ export default async function DoktorTakvimPage() {
       </div>
 
       {/* Müsaitlik Ekleme Formu */}
-      <div className="bg-surface p-6 rounded-xl border border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <h2 className="text-lg font-semibold text-text mb-4">Yeni Müsaitlik Ekle</h2>
-        <form action={addMusaitlik} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-800 mb-6">Yeni Müsaitlik Ekle</h2>
+        <form action={addMusaitlik} className="grid grid-cols-1 md:grid-cols-5 gap-x-6 gap-y-4 items-end">
           <input type="hidden" name="doktor_id" value={doktorId} />
           
           <div className="md:col-span-1">
-            <label className="block text-xs font-medium text-muted mb-1">Tarih</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Tarih</label>
             <input 
               type="date" 
               name="tarih" 
               required 
-              className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-surface text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-xs font-medium text-muted mb-1">Başlangıç (SS:DD)</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Başlangıç (SS:DD)</label>
             <input 
               type="time" 
               name="baslangic" 
               required 
-              className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-surface text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-xs font-medium text-muted mb-1">Bitiş (SS:DD)</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Bitiş (SS:DD)</label>
             <input 
               type="time" 
               name="bitis" 
               required 
-              className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-surface text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors"
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-xs font-medium text-muted mb-1">Not (İsteğe bağlı)</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Not (İsteğe bağlı)</label>
             <input 
               type="text" 
               name="not" 
               placeholder="Örn. Öğle Arası"
-              className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-surface text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors placeholder:text-gray-400"
             />
           </div>
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 h-full flex items-end pb-[2px]">
             <button 
               type="submit"
-              className="w-full py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors"
+              className="w-full py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
             >
               Kaydet
             </button>
@@ -119,37 +119,39 @@ export default async function DoktorTakvimPage() {
       </div>
 
       {/* Basit Takvim Görünümü (Grid Listesi) */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-text">Planlanmış Saatler</h2>
+      <div className="space-y-4 mt-12">
+        <h2 className="text-lg font-semibold text-gray-800">Planlanmış Saatler</h2>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm min-h-[160px] flex flex-col justify-center">
           {takvimGecmisi?.length ? (
-            takvimGecmisi.map((slot: any) => (
-              <div 
-                key={slot.id} 
-                className="bg-surface border border-border rounded-xl p-4 shadow-sm relative overflow-hidden group"
-              >
-                <div className={`absolute left-0 top-0 bottom-0 w-1 ${slot.musait ? "bg-success" : "bg-danger"}`} />
-                <div className="pl-3">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-semibold text-text">{formatDate(slot.tarih).split(' ')[0]}</span>
-                    <Badge variant={slot.musait ? "success" : "danger"}>
-                      {slot.musait ? "Müsait" : "Dolu"}
-                    </Badge>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
+              {takvimGecmisi.map((slot: any) => (
+                <div 
+                  key={slot.id} 
+                  className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow"
+                >
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${slot.musait ? "bg-green-500" : "bg-red-500"}`} />
+                  <div className="pl-3">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-sm font-medium text-gray-700">{formatDate(slot.tarih).split(' ')[0]}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${slot.musait ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                        {slot.musait ? "Müsait" : "Dolu"}
+                      </span>
+                    </div>
+                    <div className="text-lg font-semibold text-gray-900 my-1">
+                      {slot.baslangic_saat.substring(0, 5)} - {slot.bitis_saat.substring(0, 5)}
+                    </div>
+                    {slot.not_bilgi && (
+                      <p className="text-xs text-gray-500 truncate mt-2 border-t border-gray-100 pt-2">
+                        {slot.not_bilgi}
+                      </p>
+                    )}
                   </div>
-                  <div className="text-xl font-bold font-display text-text my-2">
-                    {slot.baslangic_saat.substring(0, 5)} - {slot.bitis_saat.substring(0, 5)}
-                  </div>
-                  {slot.not_bilgi && (
-                    <p className="text-xs text-muted truncate mt-2 border-t border-border pt-2">
-                      {slot.not_bilgi}
-                    </p>
-                  )}
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           ) : (
-            <div className="col-span-full py-8 text-center text-muted bg-surface border border-border rounded-xl">
+            <div className="flex items-center justify-center h-full text-gray-500 text-sm">
               Henüz takviminize müsaitlik eklemediniz.
             </div>
           )}
