@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addMusaitlik, deleteMusaitlik } from "./actions";
+import { addMusaitlik, deleteMusaitlik, saveWeeklyProgram } from "./actions";
 import { formatDate } from "@/lib/utils";
 
 // SVGs
@@ -13,19 +13,15 @@ const ListIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
 );
 
-const ChevronLeft = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-);
-
-const ChevronRight = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-);
-
 const TrashIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
 );
 
 const PlusIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+);
+
+const PlusIconLarge = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 );
 
@@ -33,23 +29,13 @@ const XIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
 );
 
-const monthNames = [
-  "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", 
-  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
-];
+const ClockIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+);
 
-const dayNames = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
-
-// Hours 08:00 to 19:00
-const hours = Array.from({ length: 12 }, (_, i) => i + 8);
-const HOUR_HEIGHT = 60;
-
-function getMonday(d: Date) {
-  const date = new Date(d);
-  const day = date.getDay() || 7; // Get current day number, converting Sun. to 7
-  if (day !== 1) date.setHours(-24 * (day - 1)); // Only manipulate the date if it isn't Mon.
-  return date;
-}
+const CheckIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+);
 
 const formatToYYYYMMDD = (date: Date) => {
   const y = date.getFullYear();
@@ -58,175 +44,203 @@ const formatToYYYYMMDD = (date: Date) => {
   return `${y}-${m}-${d}`;
 };
 
+const monthNames = [
+  "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", 
+  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+];
+
+const daysOrder = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+
+type TimeSlot = { id: string; start: string; end: string };
+type DaySchedule = { name: string; active: boolean; slots: TimeSlot[] };
+
 export default function TakvimClient({ takvimGecmisi, doktorId }: { takvimGecmisi: any[]; doktorId: string }) {
   const [view, setView] = useState<"takvim" | "liste">("takvim");
-  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(getMonday(new Date()));
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const prevWeek = () => {
-    const newDate = new Date(currentWeekStart);
-    newDate.setDate(newDate.getDate() - 7);
-    setCurrentWeekStart(newDate);
-  };
+  // Sadece istisnai tarihler İzin Yönetiminde görünecek
+  const isDateString = (str: string) => !daysOrder.includes(str);
+  const izinler = takvimGecmisi.filter(s => isDateString(s.tarih));
 
-  const nextWeek = () => {
-    const newDate = new Date(currentWeekStart);
-    newDate.setDate(newDate.getDate() + 7);
-    setCurrentWeekStart(newDate);
-  };
+  // Haftalık şablon verisini state'e al
+  const [schedule, setSchedule] = useState<DaySchedule[]>(() => {
+    return daysOrder.map(dayName => {
+      const dbSlots = takvimGecmisi.filter(s => s.tarih === dayName);
+      const slots: TimeSlot[] = dbSlots.map(s => ({
+        id: s.id || Math.random().toString(36).substring(2, 9),
+        start: s.baslangic_saat.substring(0, 5),
+        end: s.bitis_saat.substring(0, 5)
+      }));
 
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(currentWeekStart);
-    date.setDate(date.getDate() + i);
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return {
-      dateObj: date,
-      dateString: `${y}-${m}-${d}`,
-      dayNum: date.getDate(),
-      monthName: monthNames[date.getMonth()],
-      year: date.getFullYear(),
-      name: dayNames[i]
-    };
+      const active = slots.length > 0;
+      
+      return {
+        name: dayName,
+        active,
+        slots: active ? slots : [{ id: Math.random().toString(36).substring(2, 9), start: "09:00", end: "17:00" }]
+      };
+    });
   });
 
-  const weekRangeText = `${weekDays[0].dayNum} - ${weekDays[6].dayNum} ${weekDays[6].monthName} ${weekDays[6].year}`;
+  const toggleDay = (dayIndex: number, active: boolean) => {
+    const newSchedule = [...schedule];
+    newSchedule[dayIndex].active = active;
+    setSchedule(newSchedule);
+  };
 
-  const renderEvent = (slot: any, dayIndex: number) => {
-    // baslangic_saat format: "09:00:00"
-    const startHourStr = slot.baslangic_saat.split(":")[0];
-    const startMinStr = slot.baslangic_saat.split(":")[1];
-    const endHourStr = slot.bitis_saat.split(":")[0];
-    const endMinStr = slot.bitis_saat.split(":")[1];
-    
-    const startHour = parseInt(startHourStr) + parseInt(startMinStr)/60;
-    const endHour = parseInt(endHourStr) + parseInt(endMinStr)/60;
+  const addSlot = (dayIndex: number) => {
+    const newSchedule = [...schedule];
+    newSchedule[dayIndex].slots.push({
+      id: Math.random().toString(36).substring(2, 9),
+      start: "09:00",
+      end: "17:00"
+    });
+    setSchedule(newSchedule);
+  };
 
-    // Boundary check, skip if completely outside 8-19
-    if (endHour <= 8 || startHour >= 19) return null;
+  const removeSlot = (dayIndex: number, slotIndex: number) => {
+    const newSchedule = [...schedule];
+    newSchedule[dayIndex].slots.splice(slotIndex, 1);
+    setSchedule(newSchedule);
+  };
 
-    const visibleStart = Math.max(8, startHour);
-    const visibleEnd = Math.min(19, endHour);
+  const updateSlot = (dayIndex: number, slotIndex: number, field: 'start' | 'end', value: string) => {
+    const newSchedule = [...schedule];
+    newSchedule[dayIndex].slots[slotIndex][field] = value;
+    setSchedule(newSchedule);
+  };
 
-    const top = (visibleStart - 8) * HOUR_HEIGHT;
-    const height = (visibleEnd - visibleStart) * HOUR_HEIGHT;
-    const left = `calc(12.5% + ${dayIndex * 12.5}%)`;
+  const handleSaveProgram = async () => {
+    setIsSaving(true);
+    try {
+      const dataToSave: any[] = [];
+      
+      schedule.forEach(day => {
+        if (day.active) {
+          day.slots.forEach(slot => {
+            dataToSave.push({
+              doktor_id: doktorId,
+              tarih: day.name,
+              baslangic_saat: slot.start.length === 5 ? `${slot.start}:00` : slot.start,
+              bitis_saat: slot.end.length === 5 ? `${slot.end}:00` : slot.end,
+              musait: true,
+              not_bilgi: "Şablon"
+            });
+          });
+        }
+      });
 
-    return (
-      <div 
-        key={slot.id}
-        className="absolute p-1 group z-10"
-        style={{ top: `${top}px`, height: `${height}px`, left, width: '12.5%' }}
-      >
-        <div className={`w-full h-full rounded-lg px-2 py-1 text-xs overflow-hidden relative border shadow-sm transition-shadow hover:shadow-md ${slot.musait ? "bg-blue-50 border-blue-200 text-blue-800" : "bg-red-50 border-red-200 text-red-800"}`}>
-          <div className="font-semibold mb-0.5 truncate">{slot.baslangic_saat.substring(0, 5)} - {slot.bitis_saat.substring(0, 5)}</div>
-          <div className="truncate">{slot.not_bilgi || (slot.musait ? "Poliklinik" : "Dolu")}</div>
-          
-          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded">
-            <form action={deleteMusaitlik}>
-              <input type="hidden" name="id" value={slot.id} />
-              <button type="submit" className="p-1 text-red-600 hover:text-red-800" title="Sil">
-                <TrashIcon />
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    );
+      await saveWeeklyProgram(doktorId, dataToSave);
+      alert("Haftalık program başarıyla kaydedildi.");
+    } catch (error) {
+      console.error(error);
+      alert("Program kaydedilirken bir hata oluştu.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Tabs */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex flex-wrap gap-2">
+      {/* Top Tabs */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-200 pb-2">
+        <div className="flex gap-6">
           <button 
             onClick={() => setView("takvim")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${view === "takvim" ? "bg-gray-900 text-white shadow-sm" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}
+            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 ${view === "takvim" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}
           >
             <CalendarIcon />
             Haftalık Program
           </button>
           <button 
             onClick={() => setView("liste")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${view === "liste" ? "bg-gray-900 text-white shadow-sm" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}
+            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 ${view === "liste" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}
           >
             <ListIcon />
             İzin Yönetimi
           </button>
         </div>
-        
-        {view === "takvim" && (
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            <PlusIcon />
-            Yeni Müsaitlik Ekle
-          </button>
-        )}
       </div>
 
       {view === "takvim" ? (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          {/* Header Controls */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center gap-4">
-              <button onClick={prevWeek} className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"><ChevronLeft /></button>
-              <span className="text-sm font-semibold text-gray-800 min-w-[140px] text-center">{weekRangeText}</span>
-              <button onClick={nextWeek} className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"><ChevronRight /></button>
-            </div>
-            <button 
-              onClick={() => setCurrentWeekStart(getMonday(new Date()))}
-              className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
-            >
-              Bu Hafta
-            </button>
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 max-w-4xl mx-auto">
+          <div className="space-y-4">
+            {schedule.map((day, dayIndex) => (
+              <div key={day.name} className={`border rounded-xl transition-colors duration-200 ${day.active ? 'border-blue-200 bg-blue-50/10' : 'border-gray-200 bg-gray-50/30'}`}>
+                {/* Day Header */}
+                <div className="flex items-center justify-between px-5 py-4">
+                  <div className="flex items-center gap-4">
+                    {/* Toggle Switch */}
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={day.active} 
+                        onChange={(e) => toggleDay(dayIndex, e.target.checked)} 
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                    <span className="text-[15px] font-medium text-gray-800">{day.name}</span>
+                  </div>
+                  
+                  {day.active && (
+                    <button onClick={() => addSlot(dayIndex)} className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1.5 transition-colors">
+                      <PlusIcon /> Saat Ekle
+                    </button>
+                  )}
+                </div>
+
+                {/* Day Slots */}
+                {day.active && (
+                  <div className="px-5 pb-5 space-y-3">
+                    {day.slots.map((slot, slotIndex) => (
+                      <div key={slot.id} className="flex items-center gap-3">
+                        <div className="flex-1 flex items-center gap-4 p-2.5 border border-gray-200 rounded-lg bg-white shadow-sm">
+                           <div className="flex items-center gap-2 flex-1">
+                             <ClockIcon />
+                             <input 
+                               type="time" 
+                               value={slot.start} 
+                               onChange={(e) => updateSlot(dayIndex, slotIndex, 'start', e.target.value)} 
+                               className="text-sm text-gray-700 outline-none flex-1 bg-transparent cursor-pointer" 
+                             />
+                           </div>
+                           <span className="text-gray-300 font-light">—</span>
+                           <div className="flex items-center gap-2 flex-1">
+                             <ClockIcon />
+                             <input 
+                               type="time" 
+                               value={slot.end} 
+                               onChange={(e) => updateSlot(dayIndex, slotIndex, 'end', e.target.value)} 
+                               className="text-sm text-gray-700 outline-none flex-1 bg-transparent cursor-pointer" 
+                             />
+                           </div>
+                        </div>
+                        
+                        {day.slots.length > 1 && (
+                          <button onClick={() => removeSlot(dayIndex, slotIndex)} className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Sil">
+                             <TrashIcon />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
-          <div className="overflow-x-auto">
-            <div className="min-w-[800px] w-full">
-              {/* Days Header Row */}
-              <div className="flex border-b border-gray-200 bg-gray-50/50">
-                <div className="w-[12.5%] flex-shrink-0 border-r border-gray-200 p-3"></div>
-                {weekDays.map((day, i) => {
-                  const isToday = day.dateString === formatToYYYYMMDD(new Date());
-                  return (
-                    <div key={i} className={`w-[12.5%] flex-shrink-0 border-r border-gray-200 p-3 text-center ${isToday ? "bg-blue-50/50" : ""}`}>
-                      <div className={`text-xs font-medium mb-1 ${isToday ? "text-blue-600" : "text-gray-500"}`}>{day.name}</div>
-                      <div className={`text-lg font-bold ${isToday ? "text-blue-700" : "text-gray-900"}`}>{day.dayNum}</div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Grid Body */}
-              <div className="relative bg-white" style={{ height: `${(hours.length - 1) * HOUR_HEIGHT}px` }}>
-                
-                {/* Horizontal Time Lines */}
-                {hours.map((hour, i) => {
-                  if (i === hours.length - 1) return null; // Don't draw row for 19:00, just end of 18:00
-                  return (
-                    <div key={hour} className="absolute w-full flex border-b border-gray-100" style={{ top: `${i * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}>
-                      <div className="w-[12.5%] flex-shrink-0 border-r border-gray-200 p-2 text-center">
-                        <span className="text-xs font-medium text-gray-500 relative -top-3 bg-white px-1">{hour.toString().padStart(2, '0')}:00</span>
-                      </div>
-                      {weekDays.map((_, j) => (
-                        <div key={j} className="w-[12.5%] flex-shrink-0 border-r border-gray-100"></div>
-                      ))}
-                    </div>
-                  );
-                })}
-
-                {/* Events */}
-                {weekDays.map((day, dayIndex) => {
-                  const dailySlots = takvimGecmisi.filter(s => s.tarih === day.dateString);
-                  return dailySlots.map(slot => renderEvent(slot, dayIndex));
-                })}
-
-              </div>
-            </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between pt-6 mt-8 border-t border-gray-100 gap-4">
+            <span className="text-sm text-gray-500 font-medium">Değişiklikler kaydedilene kadar geçerli olmaz.</span>
+            <button 
+              onClick={handleSaveProgram}
+              disabled={isSaving}
+              className="flex items-center justify-center gap-2 w-full sm:w-auto bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-70"
+            >
+              <CheckIcon />
+              {isSaving ? "Kaydediliyor..." : "Programı Kaydet"}
+            </button>
           </div>
         </div>
       ) : (
@@ -238,13 +252,13 @@ export default function TakvimClient({ takvimGecmisi, doktorId }: { takvimGecmis
               onClick={() => setIsModalOpen(true)}
               className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
             >
-              <PlusIcon />
+              <PlusIconLarge />
               İzin Ekle
             </button>
           </div>
           
           <div className="overflow-x-auto">
-            {takvimGecmisi?.length ? (
+            {izinler.length ? (
               <table className="w-full text-left text-sm text-gray-600">
                 <thead className="bg-gray-50/50 text-xs text-gray-500 uppercase border-b border-gray-200">
                   <tr>
@@ -255,7 +269,7 @@ export default function TakvimClient({ takvimGecmisi, doktorId }: { takvimGecmis
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {takvimGecmisi.map((slot: any) => {
+                  {izinler.map((slot: any) => {
                     const dateObj = new Date(slot.tarih);
                     const formattedDate = `${dateObj.getDate()} ${monthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
                     
@@ -295,19 +309,19 @@ export default function TakvimClient({ takvimGecmisi, doktorId }: { takvimGecmis
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-gray-500 text-sm">
                 <CalendarIcon />
-                <span className="mt-3">Henüz izin / müsaitlik kaydınız bulunmuyor.</span>
+                <span className="mt-3">Henüz izin / istisna kaydınız bulunmuyor.</span>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Modal for Adding Availability */}
+      {/* Modal for Adding Availability / Leave */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-800">Yeni Müsaitlik Ekle</h2>
+              <h2 className="text-lg font-semibold text-gray-800">Yeni İzin / İstisna Ekle</h2>
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-full transition-colors"
@@ -361,9 +375,9 @@ export default function TakvimClient({ takvimGecmisi, doktorId }: { takvimGecmis
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Durum</label>
-                <select name="durum" className="w-full text-sm border border-gray-300 rounded-lg px-3.5 py-2.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
-                  <option value="musait">Müsait (Poliklinik, vs.)</option>
+                <select name="durum" defaultValue="dolu" className="w-full text-sm border border-gray-300 rounded-lg px-3.5 py-2.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
                   <option value="dolu">Dolu (İzin, Öğle Arası, vs.)</option>
+                  <option value="musait">Müsait (Poliklinik, vs.)</option>
                 </select>
               </div>
 
@@ -372,7 +386,7 @@ export default function TakvimClient({ takvimGecmisi, doktorId }: { takvimGecmis
                 <input 
                   type="text" 
                   name="not" 
-                  placeholder="Örn. Öğle Arası veya Poliklinik"
+                  placeholder="Örn. Yıllık İzin"
                   className="w-full text-sm border border-gray-300 rounded-lg px-3.5 py-2.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 />
               </div>

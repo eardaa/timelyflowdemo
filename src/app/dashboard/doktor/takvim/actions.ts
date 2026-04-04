@@ -56,3 +56,35 @@ export async function deleteMusaitlik(formData: FormData) {
     
   revalidatePath("/dashboard/doktor/takvim");
 }
+
+export async function saveWeeklyProgram(doktor_id: string, scheduleData: any[]) {
+  const supabase = await createClient();
+  
+  // Eski haftalık şablonları sil (tarih alanı gün ismi olanları)
+  const days = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+  const { error: deleteError } = await supabase
+    .from("doktor_takvim")
+    .delete()
+    .eq("doktor_id", doktor_id)
+    .in("tarih", days);
+    
+  if (deleteError) {
+    console.error("Şablon silinirken hata:", deleteError);
+    return { success: false };
+  }
+  
+  // Yeni şablonları ekle
+  if (scheduleData && scheduleData.length > 0) {
+    const { error: insertError } = await supabase
+      .from("doktor_takvim")
+      .insert(scheduleData);
+      
+    if (insertError) {
+      console.error("Şablon eklenirken hata:", insertError);
+      return { success: false };
+    }
+  }
+  
+  revalidatePath("/dashboard/doktor/takvim");
+  return { success: true };
+}
