@@ -38,6 +38,7 @@ export function KullanicilarClient({ kullanicilar, availableDoctors, updateActio
   // Yeni kullanıcı senaryosu için state'ler
   const [newRole, setNewRole] = useState<"doktor" | "admin">("doktor");
   const [newEmail, setNewEmail] = useState("");
+  const [newAdSoyad, setNewAdSoyad] = useState("");
 
   return (
     <div className="space-y-6">
@@ -279,6 +280,7 @@ export function KullanicilarClient({ kullanicilar, availableDoctors, updateActio
                     onChange={(e) => {
                       setNewRole(e.target.value as "doktor" | "admin");
                       setNewEmail(""); // Rol değişince emaili sıfırla
+                      setNewAdSoyad(""); // Rol değişince ad soyadı sıfırla
                     }}
                     className="w-full bg-surface border border-border text-text text-sm rounded-lg focus:ring-accent focus:border-accent block p-2.5 outline-none"
                   >
@@ -297,10 +299,12 @@ export function KullanicilarClient({ kullanicilar, availableDoctors, updateActio
                         className="w-full bg-surface border border-border text-text text-sm rounded-lg focus:ring-accent focus:border-accent block p-2.5 outline-none"
                         onChange={(e) => {
                           const doc = availableDoctors.find(d => d.id === e.target.value);
-                          if (doc && doc.email) {
-                            setNewEmail(doc.email);
+                          if (doc) {
+                            setNewEmail(doc.email || "");
+                            setNewAdSoyad(`${doc.ad || ""} ${doc.soyad || ""}`.trim());
                           } else {
                             setNewEmail("");
+                            setNewAdSoyad("");
                           }
                         }}
                       >
@@ -325,6 +329,21 @@ export function KullanicilarClient({ kullanicilar, availableDoctors, updateActio
                       name="adSoyad" 
                       className="w-full bg-surface border border-border text-text text-sm rounded-lg focus:ring-accent focus:border-accent block p-2.5 outline-none"
                       placeholder="Örn: Ayşe Yılmaz"
+                    />
+                  </div>
+                )}
+
+                {/* Doktor seçildiğinde ad soyad otomatik gösterilsin */}
+                {newRole === "doktor" && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-text">Doktor Ad Soyad</label>
+                    <input 
+                      type="text" 
+                      name="adSoyad" 
+                      value={newAdSoyad}
+                      readOnly
+                      className="w-full bg-bg border border-border text-muted text-sm rounded-lg block p-2.5 outline-none cursor-not-allowed"
+                      placeholder="Doktor seçildiğinde otomatik doldurulur"
                     />
                   </div>
                 )}
